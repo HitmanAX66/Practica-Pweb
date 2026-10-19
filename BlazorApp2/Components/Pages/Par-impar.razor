@@ -1,0 +1,62 @@
+﻿@page "/par-impar"
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <h2>Verificador de Par o Impar</h2>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="numeroInput" class="form-label">Número</label>
+                <InputNumber @bind-Value="Numero" id="numeroInput" class="form-control" placeholder="Escribe un número..." />
+            </div>
+
+            <button class="btn btn-primary" @onclick="VerificarNumero">Verificar Par / Impar</button>
+        </div>
+
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Resultado</label>
+
+                @if (!string.IsNullOrEmpty(Resultado))
+                {
+                    <div class="alert @ClaseAlert" role="alert">
+                        <h1 class="mb-0">@Resultado</h1>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary" role="alert">
+                        <h1 class="mb-0">Ingrese un número</h1>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int? Numero { get; set; }
+    private string Resultado { get; set; } = string.Empty;
+    private string ClaseAlert { get; set; } = "alert-secondary";
+
+    private void VerificarNumero()
+    {
+        if (!Numero.HasValue)
+        {
+            Resultado = "Por favor, ingrese un número.";
+            ClaseAlert = "alert-warning";
+            return;
+        }
+        else if (Numero.Value % 2 == 0)
+        {
+            Resultado = "Par";
+            ClaseAlert = "alert-success";
+        }
+        else
+        {
+            Resultado = "Impar";
+            ClaseAlert = "alert-danger";
+        }
+    }
+}

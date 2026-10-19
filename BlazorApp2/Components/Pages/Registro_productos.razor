@@ -1,0 +1,172 @@
+﻿@page "/Registro_productos"
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <!-- Encabezado de la interfaz -->
+    <h3 class="mb-4">Registro de productos</h3>
+
+    <!-- Alerta dinámica para la restricción obligatoria (uso de If simple) -->
+    @if (mensajeError != "")
+    {
+        <div class="alert alert-danger">@mensajeError</div>
+    }
+
+    <!-- Controles de Captura -->
+    <div class="mb-3 row align-items-center">
+        <label class="col-sm-2 col-form-label fw-bold">No. de inventario</label>
+        <div class="col-sm-4">
+            <input type="number" class="form-control" @bind="tempId" />
+        </div>
+    </div>
+
+    <div class="mb-3 row align-items-center">
+        <label class="col-sm-2 col-form-label fw-bold">Descripción</label>
+        <div class="col-sm-6">
+            <input type="text" class="form-control" placeholder="Escribe la descripción del producto" @bind="tempDescripcion" />
+        </div>
+    </div>
+
+    <div class="mb-4 row align-items-center">
+        <label class="col-sm-2 col-form-label fw-bold">Departamento</label>
+        <div class="col-sm-6">
+            <!-- Binding de Radio Buttons simple -->
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="departamento" id="radFrutas" 
+                       checked="@(tempDepartamento == "Frutas")" 
+                       @onchange='() => tempDepartamento = "Frutas"' />
+                <label class="form-check-label" for="radFrutas">Frutas</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="departamento" id="radVerduras" 
+                       checked="@(tempDepartamento == "Verduras")" 
+                       @onchange='() => tempDepartamento = "Verduras"' />
+                <label class="form-check-label" for="radVerduras">Verduras</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="departamento" id="radLacteos" 
+                       checked="@(tempDepartamento == "Lácteos")" 
+                       @onchange='() => tempDepartamento = "Lácteos"' />
+                <label class="form-check-label" for="radLacteos">Lácteos</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="mb-4">
+        <button class="btn btn-success me-2" @onclick="GuardarDatos">Guardar datos</button>
+        <button class="btn btn-success me-2" @onclick="MostrarListaCompleta">Lista completa</button>
+        <button class="btn btn-success me-2" @onclick='() => FiltrarLista("Frutas")'>Lista de frutas</button>
+        <button class="btn btn-success me-2" @onclick='() => FiltrarLista("Verduras")'>Lista de verduras</button>
+        <button class="btn btn-success" @onclick='() => FiltrarLista("Lácteos")'>Lista de lácteos</button>
+    </div>
+
+    <!-- Área de Resultados controlada por un If -->
+    @if (mostrarLista)
+    {
+        <table class="table table-striped table-bordered mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>No. Inventario</th>
+                    <th>Descripción</th>
+                    <th>Departamento</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Uso de For para recorrer las listas base y un If para filtrar (Actividad 11/13 style) -->
+                @{
+                    int contadorMostrados = 0;
+                    for (int i = 0; i < idsGuardados.Count; i++)
+                    {
+                        // Si el filtro actual está vacío (Lista Completa) o si el departamento coincide
+                        if (filtroActual == "" || departamentosGuardados[i] == filtroActual)
+                        {
+                            <tr>
+                                <td>@idsGuardados[i]</td>
+                                <td>@descripcionesGuardadas[i]</td>
+                                <td>@departamentosGuardados[i]</td>
+                            </tr>
+                            contadorMostrados++;
+                        }
+                    }
+
+                    // Si después del ciclo no se mostró nada
+                    if (contadorMostrados == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No hay productos que mostrar en este departamento.</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+        
+        <button class="btn btn-success mt-2" @onclick="CerrarLista">Cerrar lista</button>
+    }
+</div>
+
+@code {
+    // 1. Variables Temporales para capturar del HTML (sin objetos)
+    private int tempId { get; set; } = 0;
+    private string tempDescripcion { get; set; } = "";
+    private string tempDepartamento { get; set; } = "Frutas";
+
+    // 2. Listas Paralelas en Memoria (como vimos en Actividad 11/13)
+    private List<int> idsGuardados { get; set; } = new List<int>();
+    private List<string> descripcionesGuardadas { get; set; } = new List<string>();
+    private List<string> departamentosGuardados { get; set; } = new List<string>();
+    
+    // 3. Variables de Control
+    private bool mostrarLista = false;
+    private string mensajeError = "";
+    private string filtroActual = ""; // "" = Todo, "Frutas" = Solo frutas, etc.
+
+    // 4. Lógica de Negocio
+    private void GuardarDatos()
+    {
+        mensajeError = "";
+
+        // Validar que el ID no exista recorriendo la lista con un ciclo for básico (Restricción PDF)
+        bool idDuplicado = false;
+        for (int i = 0; i < idsGuardados.Count; i++)
+        {
+            if (idsGuardados[i] == tempId)
+            {
+                idDuplicado = true;
+            }
+        }
+
+        if (idDuplicado)
+        {
+            mensajeError = $"Error: El número de inventario {tempId} ya existe. Captura uno distinto.";
+        }
+        else
+        {
+            // Guardar en las listas paralelas
+            idsGuardados.Add(tempId);
+            descripcionesGuardadas.Add(tempDescripcion);
+            departamentosGuardados.Add(tempDepartamento);
+
+            // Limpiar campos
+            tempId = 0;
+            tempDescripcion = "";
+            tempDepartamento = "Frutas";
+        }
+    }
+
+    private void MostrarListaCompleta()
+    {
+        filtroActual = ""; // Vacío significa mostrar todos
+        mostrarLista = true;
+    }
+
+    private void FiltrarLista(string categoria)
+    {
+        filtroActual = categoria; // Establece el filtro (ej. "Frutas")
+        mostrarLista = true;
+    }
+
+    private void CerrarLista()
+    {
+        mostrarLista = false;
+    }
+}
